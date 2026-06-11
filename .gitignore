@@ -1,0 +1,23 @@
+# Secrets / local config
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Elasticsearch / Kibana local data (if bind-mounted)
+esdata/
+kibanadata/
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

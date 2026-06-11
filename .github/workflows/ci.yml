@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dev dependencies
+        run: pip install ruff pytest
+
+      - name: Lint
+        run: ruff check .
+
+      # Guarded until M2 lands the first tests — pytest exits 5 on empty collection
+      - name: Test
+        run: |
+          if [ -d tests ]; then
+            pytest -v
+          else
+            echo "No tests yet (lands in M2)"
+          fi
