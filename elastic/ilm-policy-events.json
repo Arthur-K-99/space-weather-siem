@@ -1,0 +1,23 @@
+{
+  "policy": {
+    "_meta": {
+      "description": "space-weather-events: rollover weekly or at 5gb, delete after 90 days"
+    },
+    "phases": {
+      "hot": {
+        "actions": {
+          "rollover": {
+            "max_age": "7d",
+            "max_primary_shard_size": "5gb"
+          }
+        }
+      },
+      "delete": {
+        "min_age": "90d",
+        "actions": {
+          "delete": {}
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "index_patterns": ["space-weather-events*"],
+  "data_stream": {},
+  "priority": 500,
+  "_meta": {
+    "description": "Normalized space-weather events (ECS-inspired), written by the collector"
+  },
+  "template": {
+    "settings": {
+      "number_of_shards": 1,
+      "number_of_replicas": 0,
+      "index.lifecycle.name": "space-weather-events"
+    },
+    "mappings": {
+      "dynamic_templates": [
+        {
+          "metrics_as_double": {
+            "path_match": "metrics.*",
+            "mapping": { "type": "double" }
+          }
+        }
+      ],
+      "properties": {
+        "@timestamp": { "type": "date" },
+        "event": {
+          "properties": {
+            "kind": { "type": "keyword" },
+            "category": { "type": "keyword" },
+            "dataset": { "type": "keyword" },
+            "severity": { "type": "byte" }
+          }
+        },
+        "observer": {
+          "properties": {
+            "name": { "type": "keyword" }
+          }
+        },
+        "source": {
+          "properties": {
+            "feed": { "type": "keyword" },
+            "url": { "type": "keyword", "ignore_above": 1024 }
+          }
+        },
+        "raw": { "type": "object", "enabled": false }
+      }
+    }
+  }
+}

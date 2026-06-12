@@ -66,7 +66,7 @@ python scripts/replay.py    # optional: replay the May 2024 G5 storm so rules fi
 ## Roadmap
 
 - [x] **M0** — Repo bootstrap: README, license, CI stub
-- [ ] **M1** — Elasticsearch + Kibana via docker-compose, index templates + ILM
+- [x] **M1** — Elasticsearch + Kibana via docker-compose, index templates + ILM
 - [ ] **M2** — First ingestion: Kp-index + X-ray feeds, normalizer + tests
 - [ ] **M3** — Full ingestion: all SWPC feeds + DONKI, idempotent indexing
 - [ ] **M4** — Detection engine: YAML rules, threshold rules 1–3, alert dedup/throttle

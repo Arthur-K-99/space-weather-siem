@@ -1,0 +1,41 @@
+{
+  "index_patterns": ["space-weather-alerts*"],
+  "priority": 500,
+  "_meta": {
+    "description": "Alerts emitted by the detector rule engine; documents are updated in place (last_seen/count), so a plain index rather than a data stream"
+  },
+  "template": {
+    "settings": {
+      "number_of_shards": 1,
+      "number_of_replicas": 0
+    },
+    "mappings": {
+      "properties": {
+        "@timestamp": { "type": "date" },
+        "message": { "type": "text" },
+        "rule": {
+          "properties": {
+            "id": { "type": "keyword" },
+            "name": { "type": "keyword" }
+          }
+        },
+        "event": {
+          "properties": {
+            "kind": { "type": "keyword" },
+            "category": { "type": "keyword" },
+            "severity": { "type": "byte" }
+          }
+        },
+        "alert": {
+          "properties": {
+            "fingerprint": { "type": "keyword" },
+            "status": { "type": "keyword" },
+            "first_seen": { "type": "date" },
+            "last_seen": { "type": "date" },
+            "count": { "type": "integer" }
+          }
+        }
+      }
+    }
+  }
+}

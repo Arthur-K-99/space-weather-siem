@@ -26,6 +26,7 @@ A portfolio detection-engineering lab: a full SIEM pipeline (ingest → normaliz
 ## Milestone status
 
 - M0 (repo bootstrap) — done 2026-06-11
-- Next: M1 — docker-compose for ES + Kibana, bootstrap script for index templates + ILM
+- M1 (docker-compose ES + Kibana, index templates + ILM via scripts/bootstrap.py) — done 2026-06-11, Elastic Stack pinned to 9.4.2
+- Next: M2 — collector polls Kp-index + X-ray feeds, normalizer + fixture tests
 
 When a milestone lands, tick it in the README roadmap and keep commits scoped to one milestone.
