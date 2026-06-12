@@ -54,14 +54,15 @@ Rules live as YAML in [`rules/`](rules/) — detection-as-code, reviewed like an
 
 ## Quickstart
 
-> 🚧 Under construction — see the [roadmap](#roadmap). Full instructions land with M1–M2.
-
 ```sh
-cp .env.example .env        # set ES password + NASA API key
-docker compose up -d
-python scripts/bootstrap.py # index templates, ILM, dashboards
-python scripts/replay.py    # optional: replay the May 2024 G5 storm so rules fire now
+cp .env.example .env        # set passwords (+ NASA API key from M3 on)
+docker compose up -d        # Elasticsearch + Kibana 9.4.2, security on
+python scripts/bootstrap.py # index templates + ILM (stdlib only, no installs)
 ```
+
+Kibana is at <http://localhost:5601> — log in as `elastic` with your `ELASTIC_PASSWORD`. On Linux hosts, Elasticsearch needs `sysctl -w vm.max_map_count=262144` first (Docker Desktop and OrbStack handle this for you).
+
+> 🚧 Ingestion, detection, and replay land with M2–M7 — see the [roadmap](#roadmap). Coming up: `python scripts/replay.py` to replay the May 2024 G5 storm so every rule fires on demand.
 
 ## Roadmap
 
