@@ -21,6 +21,7 @@ from collector.schema import (
 )
 
 FEED = "planetary_k_index_1m"
+GROUP = "realtime"
 URL = f"{SWPC_BASE}/json/planetary_k_index_1m.json"
 CATEGORY = "geomagnetic"
 DATASET = "swpc.planetary_k_index"

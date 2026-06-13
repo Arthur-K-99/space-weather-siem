@@ -51,6 +51,59 @@ def xray_to_severity(flux: float) -> int:
     return 0
 
 
+# NOAA S-scale thresholds on the GOES >=10 MeV integral proton flux, in pfu.
+# S1=10, S2=100, S3=1e3, S4=1e4, S5=1e5.
+_PROTON_LADDER = ((1e5, 5), (1e4, 4), (1e3, 3), (1e2, 2), (10, 1))
+
+
+def proton_to_severity(pfu: float) -> int:
+    """Map >=10 MeV integral proton flux (pfu) to the NOAA S-scale as severity 0-5."""
+    for threshold, severity in _PROTON_LADDER:
+        if pfu >= threshold:
+            return severity
+    return 0
+
+
+_FLARE_BASE = {"A": 1e-8, "B": 1e-7, "C": 1e-6, "M": 1e-5, "X": 1e-4}
+
+
+def flare_class_to_severity(class_type: str | None) -> int:
+    """Map a DONKI flare class ("X1.0", "M5.2", "C3.1") to severity via the R-scale.
+
+    Reuses the X-ray ladder: the class letter sets the decade and the magnitude
+    scales within it, so "M5.2" -> 5.2e-5 W/m² -> R2 -> 2.
+    """
+    if not class_type:
+        return 0
+    base = _FLARE_BASE.get(class_type[0].upper())
+    if base is None:
+        return 0
+    try:
+        mag = float(class_type[1:]) if len(class_type) > 1 else 1.0
+    except ValueError:
+        mag = 1.0
+    return xray_to_severity(base * mag)
+
+
+def num(value: object) -> float | None:
+    """Parse a feed value to float, returning None for nulls/blanks/garbage.
+
+    SWPC products feeds carry everything as strings and use null/"" for data gaps.
+    """
+    if value is None or value == "":
+        return None
+    try:
+        return float(value)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return None
+
+
+def zip_header(payload: list[list]) -> list[dict]:
+    """Turn a SWPC products array-of-arrays ([header, *rows]) into dicts."""
+    header, *rows = payload
+    return [dict(zip(header, row, strict=False)) for row in rows]
+
+
 def to_utc_iso(time_tag: str) -> str:
     """Normalize a SWPC ``time_tag`` to ISO-8601 UTC with a trailing ``Z``.
 
@@ -86,9 +139,14 @@ def build_event(
     url: str,
     metrics: dict,
     raw: dict,
+    extra: dict | None = None,
 ) -> dict:
-    """Assemble the common normalized-event document."""
-    return {
+    """Assemble the common normalized-event document.
+
+    ``extra`` merges extra top-level fields (e.g. a discrete event's class), which
+    must be real fields because the template stores ``raw`` unindexed.
+    """
+    doc = {
         "@timestamp": timestamp,
         "event": {
             "kind": kind,
@@ -101,3 +159,6 @@ def build_event(
         "metrics": metrics,
         "raw": raw,
     }
+    if extra:
+        doc.update(extra)
+    return doc

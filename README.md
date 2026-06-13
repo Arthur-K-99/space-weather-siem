@@ -55,25 +55,29 @@ Rules live as YAML in [`rules/`](rules/) — detection-as-code, reviewed like an
 ## Quickstart
 
 ```sh
-cp .env.example .env        # set passwords (+ NASA API key from M3 on)
-docker compose up -d        # Elasticsearch + Kibana 9.4.2, security on
-python scripts/bootstrap.py # index templates + ILM (stdlib only, no installs)
-
-# Collector: poll Kp-index + GOES X-ray, normalize, index (reads .env automatically)
-python -m venv .venv && .venv/bin/pip install -r collector/requirements.txt
-.venv/bin/python -m collector --once   # omit --once to poll every 60s
+cp .env.example .env   # set passwords; add a NASA API key for higher DONKI limits
+docker compose up -d   # ES + Kibana, one-shot bootstrap (templates/ILM), then the collector
 ```
+
+That's the whole pipeline: `bootstrap` applies the index templates + ILM, then `collector` polls all seven SWPC feeds and the four NASA DONKI catalogs on per-feed cadences (60 s / 5 min / 15 min), normalizes, and indexes into `space-weather-events`. Watch it run with `docker compose logs -f collector`.
 
 Kibana is at <http://localhost:5601> — log in as `elastic` with your `ELASTIC_PASSWORD`. On Linux hosts, Elasticsearch needs `sysctl -w vm.max_map_count=262144` first (Docker Desktop and OrbStack handle this for you).
 
-> 🚧 The collector runs from the host until M3 wires it (plus the DONKI poller) into docker-compose. Detection and replay land with M4–M7 — see the [roadmap](#roadmap). Coming up: `python scripts/replay.py` to replay the May 2024 G5 storm so every rule fires on demand.
+To run the collector outside Docker (dev/tests), it reads `.env` automatically:
+
+```sh
+python -m venv .venv && .venv/bin/pip install -r collector/requirements.txt
+.venv/bin/python -m collector --once   # one pass over every feed, then exit
+```
+
+> 🚧 Detection and replay land with M4–M7 — see the [roadmap](#roadmap). Coming up: `python scripts/replay.py` to replay the May 2024 G5 storm so every rule fires on demand.
 
 ## Roadmap
 
 - [x] **M0** — Repo bootstrap: README, license, CI stub
 - [x] **M1** — Elasticsearch + Kibana via docker-compose, index templates + ILM
 - [x] **M2** — First ingestion: Kp-index + X-ray feeds, normalizer + tests
-- [ ] **M3** — Full ingestion: all SWPC feeds + DONKI, idempotent indexing
+- [x] **M3** — Full ingestion: all SWPC feeds + DONKI, idempotent indexing
 - [ ] **M4** — Detection engine: YAML rules, threshold rules 1–3, alert dedup/throttle
 - [ ] **M5** — Correlation rules 4–6
 - [ ] **M6** — Kibana dashboards (exported to repo as NDJSON)

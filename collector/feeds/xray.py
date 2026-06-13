@@ -22,6 +22,7 @@ from collector.schema import (
 )
 
 FEED = "goes_xrays_1day"
+GROUP = "realtime"
 URL = f"{SWPC_BASE}/json/goes/primary/xrays-1-day.json"
 CATEGORY = "xray"
 DATASET = "swpc.goes_xray"

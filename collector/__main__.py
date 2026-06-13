@@ -54,7 +54,6 @@ def main(argv: list[str] | None = None) -> int:
     if not password:
         print("ELASTIC_PASSWORD is not set (env or .env)", file=sys.stderr)
         return 1
-    interval = int(os.environ.get("POLL_INTERVAL_REALTIME", "60"))
 
     client = make_client(es_url, password)
     session = requests.Session()
@@ -65,7 +64,7 @@ def main(argv: list[str] | None = None) -> int:
             "run-once complete: created=%d skipped=%d", created, skipped
         )
     else:
-        run_forever(client, session, interval)
+        run_forever(client, session)
     return 0
 
 

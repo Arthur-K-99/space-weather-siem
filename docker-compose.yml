@@ -80,5 +80,40 @@ services:
       start_period: 60s
     restart: unless-stopped
 
+  # One-shot: apply index templates + ILM before the collector writes, so the
+  # data stream is created with our mapping. stdlib-only, so a plain python image
+  # with the scripts/ + elastic/ dirs mounted is enough.
+  bootstrap:
+    image: python:3.12-slim
+    container_name: sws-bootstrap
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      - ES_URL=http://elasticsearch:9200
+    volumes:
+      - ./scripts:/app/scripts:ro
+      - ./elastic:/app/elastic:ro
+    working_dir: /app
+    command: python scripts/bootstrap.py
+    restart: "no"
+
+  collector:
+    build:
+      context: .
+      dockerfile: collector/Dockerfile
+    container_name: sws-collector
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+      bootstrap:
+        condition: service_completed_successfully
+    env_file: .env
+    environment:
+      # In-network address overrides the host-oriented ES_URL from .env
+      - ES_URL=http://elasticsearch:9200
+    restart: unless-stopped
+
 volumes:
   esdata:
