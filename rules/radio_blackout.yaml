@@ -1,0 +1,15 @@
+id: radio_blackout
+name: Radio Blackout
+description: >
+  GOES long-band X-ray flux crossed the M-class threshold (>= 1e-5 W/m²). The
+  alert severity follows the NOAA R-scale on each event (M1->R1, M5->R2, X1->R3,
+  X10->R4, X20->R5). Impact: HF radio degradation/blackout on the sunlit side,
+  loss of low-frequency navigation signals.
+category: radio_blackout
+scale: R
+query:
+  dataset: swpc.goes_xray
+  field: metrics.xray_flux
+  op: ">="
+  threshold: 1.0e-5
+throttle: 1h

@@ -1,0 +1,15 @@
+id: radiation_storm
+name: Solar Radiation Storm
+description: >
+  GOES >=10 MeV integral proton flux crossed the S1 threshold (>= 10 pfu). The
+  alert severity follows the NOAA S-scale on each event (10->S1 ... 1e5->S5).
+  Impact: single-event upsets and degradation on satellites, elevated radiation
+  on polar flight routes, risk to astronauts.
+category: solar_radiation
+scale: S
+query:
+  dataset: swpc.goes_protons
+  field: metrics.proton_flux_10mev
+  op: ">="
+  threshold: 10
+throttle: 1h

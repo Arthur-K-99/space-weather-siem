@@ -115,5 +115,20 @@ services:
       - ES_URL=http://elasticsearch:9200
     restart: unless-stopped
 
+  detector:
+    build:
+      context: .
+      dockerfile: detector/Dockerfile
+    container_name: sws-detector
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+      bootstrap:
+        condition: service_completed_successfully
+    env_file: .env
+    environment:
+      - ES_URL=http://elasticsearch:9200
+    restart: unless-stopped
+
 volumes:
   esdata:

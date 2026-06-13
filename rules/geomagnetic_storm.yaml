@@ -1,0 +1,15 @@
+id: geomagnetic_storm
+name: Geomagnetic Storm
+description: >
+  Planetary K-index reached storm levels. Kp >= 5 is a G1 storm; the alert
+  severity follows the NOAA G-scale already stamped on each event (5->G1 ... 9->G5).
+  Impact: GPS/GNSS degradation, geomagnetically induced currents in power grids,
+  aurora to lower latitudes.
+category: geomagnetic
+scale: G
+query:
+  dataset: swpc.planetary_k_index
+  field: metrics.kp_index
+  op: ">="
+  threshold: 5
+throttle: 1h
