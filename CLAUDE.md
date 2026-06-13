@@ -27,6 +27,7 @@ A portfolio detection-engineering lab: a full SIEM pipeline (ingest → normaliz
 
 - M0 (repo bootstrap) — done 2026-06-11
 - M1 (docker-compose ES + Kibana, index templates + ILM via scripts/bootstrap.py) — done 2026-06-11, Elastic Stack pinned to 9.4.2
-- Next: M2 — collector polls Kp-index + X-ray feeds, normalizer + fixture tests
+- M2 (collector: Kp-index + GOES X-ray feeds → normalize → idempotent index) — done 2026-06-13. Run host-side via `python -m collector [--once]`; verified live endpoint schemas (Kp `time_tag` is naive UTC; X-ray feed has two energy bands, we keep only the long 0.1-0.8nm channel). Idempotency = deterministic sha1 `_id` + bulk `op_type=create` (409 = skip). Severity ladders (`kp_to_severity`/`xray_to_severity`) live in collector/schema.py for the detector to reuse.
+- Next: M3 — remaining SWPC feeds + DONKI poller, per-feed cadence config, containerize the collector (Dockerfile + compose service, depends on a bootstrap step)
 
 When a milestone lands, tick it in the README roadmap and keep commits scoped to one milestone.

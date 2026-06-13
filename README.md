@@ -58,17 +58,21 @@ Rules live as YAML in [`rules/`](rules/) — detection-as-code, reviewed like an
 cp .env.example .env        # set passwords (+ NASA API key from M3 on)
 docker compose up -d        # Elasticsearch + Kibana 9.4.2, security on
 python scripts/bootstrap.py # index templates + ILM (stdlib only, no installs)
+
+# Collector: poll Kp-index + GOES X-ray, normalize, index (reads .env automatically)
+python -m venv .venv && .venv/bin/pip install -r collector/requirements.txt
+.venv/bin/python -m collector --once   # omit --once to poll every 60s
 ```
 
 Kibana is at <http://localhost:5601> — log in as `elastic` with your `ELASTIC_PASSWORD`. On Linux hosts, Elasticsearch needs `sysctl -w vm.max_map_count=262144` first (Docker Desktop and OrbStack handle this for you).
 
-> 🚧 Ingestion, detection, and replay land with M2–M7 — see the [roadmap](#roadmap). Coming up: `python scripts/replay.py` to replay the May 2024 G5 storm so every rule fires on demand.
+> 🚧 The collector runs from the host until M3 wires it (plus the DONKI poller) into docker-compose. Detection and replay land with M4–M7 — see the [roadmap](#roadmap). Coming up: `python scripts/replay.py` to replay the May 2024 G5 storm so every rule fires on demand.
 
 ## Roadmap
 
 - [x] **M0** — Repo bootstrap: README, license, CI stub
 - [x] **M1** — Elasticsearch + Kibana via docker-compose, index templates + ILM
-- [ ] **M2** — First ingestion: Kp-index + X-ray feeds, normalizer + tests
+- [x] **M2** — First ingestion: Kp-index + X-ray feeds, normalizer + tests
 - [ ] **M3** — Full ingestion: all SWPC feeds + DONKI, idempotent indexing
 - [ ] **M4** — Detection engine: YAML rules, threshold rules 1–3, alert dedup/throttle
 - [ ] **M5** — Correlation rules 4–6
