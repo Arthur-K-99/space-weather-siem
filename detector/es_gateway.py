@@ -7,9 +7,9 @@ throttle bucket overwrites in place rather than duplicating.
 
 from __future__ import annotations
 
-from elasticsearch import Elasticsearch, NotFoundError
+from collections.abc import Sequence
 
-from detector.rules import Rule
+from elasticsearch import Elasticsearch, NotFoundError
 
 EVENTS_INDEX = "space-weather-events"
 ALERTS_INDEX = "space-weather-alerts"
@@ -19,8 +19,10 @@ def make_client(url: str, password: str, *, user: str = "elastic") -> Elasticsea
     return Elasticsearch(url, basic_auth=(user, password), request_timeout=30)
 
 
-def fetch_events(es: Elasticsearch, rule: Rule, start_iso: str, end_iso: str) -> list[dict]:
-    """Events of the rule's dataset in [start, end]. Threshold is applied in engine."""
+def fetch_events(
+    es: Elasticsearch, datasets: Sequence[str], start_iso: str, end_iso: str
+) -> list[dict]:
+    """Events of any of ``datasets`` in [start, end]. Matching is applied in the engine."""
     try:
         resp = es.search(
             index=EVENTS_INDEX,
@@ -29,7 +31,7 @@ def fetch_events(es: Elasticsearch, rule: Rule, start_iso: str, end_iso: str) ->
                 "bool": {
                     "filter": [
                         {"range": {"@timestamp": {"gte": start_iso, "lte": end_iso}}},
-                        {"term": {"event.dataset": rule.dataset}},
+                        {"terms": {"event.dataset": list(datasets)}},
                     ]
                 }
             },

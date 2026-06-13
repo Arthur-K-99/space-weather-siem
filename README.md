@@ -59,7 +59,7 @@ cp .env.example .env   # set passwords; add a NASA API key for higher DONKI limi
 docker compose up -d   # ES + Kibana, one-shot bootstrap (templates/ILM), then the collector
 ```
 
-That's the whole pipeline: `bootstrap` applies the index templates + ILM, `collector` polls all seven SWPC feeds and the four NASA DONKI catalogs on per-feed cadences (60 s / 5 min / 15 min) and indexes into `space-weather-events`, and `detector` evaluates the YAML rules in [`rules/`](rules/) every minute, writing deduped/throttled alerts to `space-weather-alerts`. Watch them with `docker compose logs -f collector detector`.
+That's the whole pipeline: `bootstrap` applies the index templates + ILM, `collector` polls all seven SWPC feeds and the four NASA DONKI catalogs on per-feed cadences (60 s / 5 min / 15 min) and indexes into `space-weather-events`, and `detector` evaluates the YAML rules in [`rules/`](rules/) every minute, writing deduped/throttled alerts to `space-weather-alerts`. The six rules span three threshold detections (Kp / X-ray / proton storms), two correlations (a Bz+speed storm precursor and the flare→CME→storm chain), and a feed-down "telemetry loss" health rule. Watch them with `docker compose logs -f collector detector`.
 
 Kibana is at <http://localhost:5601> — log in as `elastic` with your `ELASTIC_PASSWORD`. On Linux hosts, Elasticsearch needs `sysctl -w vm.max_map_count=262144` first (Docker Desktop and OrbStack handle this for you).
 
@@ -70,7 +70,7 @@ python -m venv .venv && .venv/bin/pip install -r collector/requirements.txt
 .venv/bin/python -m collector --once   # one pass over every feed, then exit
 ```
 
-> 🚧 Space weather is usually quiet, so the threshold rules rarely fire on live data. Correlation rules, dashboards, and replay land with M5–M7 — see the [roadmap](#roadmap). Coming up: `python scripts/replay.py` to replay the May 2024 G5 storm so every rule fires on demand.
+> 🚧 Space weather is usually quiet, so the threshold and correlation rules rarely fire on live data. Dashboards and replay land with M6–M7 — see the [roadmap](#roadmap). Coming up: `python scripts/replay.py` to replay the May 2024 G5 storm so every rule fires on demand.
 
 ## Roadmap
 
@@ -79,7 +79,7 @@ python -m venv .venv && .venv/bin/pip install -r collector/requirements.txt
 - [x] **M2** — First ingestion: Kp-index + X-ray feeds, normalizer + tests
 - [x] **M3** — Full ingestion: all SWPC feeds + DONKI, idempotent indexing
 - [x] **M4** — Detection engine: YAML rules, threshold rules 1–3, alert dedup/throttle
-- [ ] **M5** — Correlation rules 4–6
+- [x] **M5** — Correlation + health rules 4–6: storm precursor, flare→CME→storm chain, telemetry loss
 - [ ] **M6** — Kibana dashboards (exported to repo as NDJSON)
 - [ ] **M7** — Historical-storm replay + runbooks + screenshots
 

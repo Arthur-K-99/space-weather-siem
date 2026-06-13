@@ -1,0 +1,29 @@
+id: solar_storm_chain
+name: Solar Storm Chain
+description: >
+  Multi-stage correlation, the space-weather analog of a multi-stage intrusion
+  (recon -> delivery -> impact): a solar flare (>= M-class) is followed by a CME
+  within 6h, then a Kp >= 5 geomagnetic storm within 3 days. The three DONKI
+  catalog stages are linked into one composite Sun-to-Earth incident. Impact:
+  confirms a storm's solar origin and attributes it to a specific flare/CME.
+category: geomagnetic
+scale: G
+type: chain
+severity: 4
+# Storm can trail the flare by up to ~3d6h; widen the fetch so a chain whose
+# storm has already passed is still correlated (and for replayed history).
+lookback: 4d
+stages:
+  - name: flare
+    dataset: donki.flr
+    min_severity: 1
+  - name: cme
+    dataset: donki.cme
+    within: 6h
+  - name: storm
+    dataset: donki.gst
+    field: metrics.kp_index
+    op: ">="
+    threshold: 5
+    within: 3d
+throttle: 6h

@@ -1,0 +1,24 @@
+id: storm_precursor
+name: Geomagnetic Storm Precursor
+description: >
+  Correlation early-warning: a sustained southward interplanetary magnetic field
+  (Bz <= -10 nT for >= 30 min) together with a fast solar wind (speed > 600 km/s)
+  are the coupling conditions that drive geomagnetic storms. Detected across the
+  DSCOVR magnetometer and plasma feeds before Kp itself responds. Impact: a strong
+  storm is likely within hours — pre-position grid and satellite operators.
+category: solar_wind
+scale: G
+type: precursor
+severity: 3
+window: 1h
+conditions:
+  - dataset: swpc.solar_wind_mag
+    field: metrics.bz_gsm
+    op: "<="
+    threshold: -10
+    sustain: 30m
+  - dataset: swpc.solar_wind_plasma
+    field: metrics.speed_km_s
+    op: ">"
+    threshold: 600
+throttle: 1h

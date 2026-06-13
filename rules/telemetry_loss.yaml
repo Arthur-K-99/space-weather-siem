@@ -1,0 +1,26 @@
+id: telemetry_loss
+name: Telemetry Loss
+description: >
+  A monitored feed has produced no documents for longer than N x its polling
+  cadence — the space-weather analog of a SIEM "log source down" / dead-agent
+  alert. Silence is itself an incident: a coverage gap blinds every downstream
+  detection. Impact: events from the affected instrument are not being collected,
+  so storms on that channel would go unseen.
+category: pipeline_health
+scale: H
+type: telemetry_loss
+severity: 2
+monitors:
+  - dataset: swpc.planetary_k_index
+    cadence: 1m
+    multiplier: 10
+  - dataset: swpc.goes_xray
+    cadence: 1m
+    multiplier: 10
+  - dataset: swpc.solar_wind_mag
+    cadence: 1m
+    multiplier: 10
+  - dataset: swpc.solar_wind_plasma
+    cadence: 1m
+    multiplier: 10
+throttle: 1h

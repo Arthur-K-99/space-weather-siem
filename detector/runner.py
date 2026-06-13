@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from elasticsearch import Elasticsearch
 
@@ -21,8 +21,13 @@ def run_cycle(
     """Evaluate every rule once. Returns the number of new/escalated alerts."""
     fired = 0
     for rule in rules:
-        start = iso_z(bucket_start(now, rule.throttle_s))
-        events = fetch_events(es, rule, start, iso_z(now))
+        # Threshold rules evaluate the current (aligned) throttle bucket; correlation
+        # and health rules need a rolling look-back to see across time and feeds.
+        if rule.type == "threshold":
+            start = bucket_start(now, rule.throttle_s)
+        else:
+            start = now - timedelta(seconds=rule.lookback_s)
+        events = fetch_events(es, rule.datasets, iso_z(start), iso_z(now))
         for alert_id, alert in evaluate(rule, events, now):
             is_new, prior_severity = upsert_alert(es, alert_id, alert)
             severity = alert["event"]["severity"]
