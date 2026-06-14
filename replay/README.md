@@ -16,6 +16,7 @@ exact same ingest path as live data.
 | `protons.json` | GOES ≥10 MeV protons (objects) — crosses 10 pfu | radiation storm (S1+) |
 | `mag.json` | DSCOVR magnetometer (array-of-arrays) — Bz to −50 nT | storm precursor |
 | `plasma.json` | DSCOVR plasma (array-of-arrays) — speed to 900 km/s | storm precursor + telemetry loss |
+| `noaa_scales.json` | NOAA G/R/S scales (dict) — G5 / R3 / S1 | SOC Overview scale tiles |
 | `donki_flr.json` | DONKI flare (X1.0, AR3664) | chain stage 1 |
 | `donki_cme.json` | DONKI CME (fast halo) | chain stage 2 |
 | `donki_gst.json` | DONKI storm (peak Kp 9) | chain stage 3 (G5) |

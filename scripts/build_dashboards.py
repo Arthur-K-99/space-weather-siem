@@ -79,8 +79,7 @@ def _metric_agg(agg_id: str, agg_type: str, field: str | None, label: str) -> di
         "enabled": True,
         "type": agg_type,
         "schema": "metric",
-        "params": params,
-        "customLabel": label,
+        "params": {**params, "customLabel": label},
     }
 
 
@@ -168,8 +167,7 @@ def series_vis(
                 "enabled": True,
                 "type": agg_type,
                 "schema": "metric",
-                "params": params,
-                "customLabel": label,
+                "params": {**params, "customLabel": label},
             }
         )
         series_params.append(
@@ -254,8 +252,7 @@ def table_vis(metrics: list[tuple[str, str, str | None, str]], bucket: dict) -> 
                 "enabled": True,
                 "type": agg_type,
                 "schema": "metric",
-                "params": params,
-                "customLabel": label,
+                "params": {**params, "customLabel": label},
             }
         )
     aggs.append(bucket)

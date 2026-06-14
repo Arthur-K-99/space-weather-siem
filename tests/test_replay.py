@@ -38,10 +38,19 @@ def test_replay_covers_every_dataset():
         "swpc.goes_protons",
         "swpc.solar_wind_mag",
         "swpc.solar_wind_plasma",
+        "swpc.noaa_scales",
         "donki.flr",
         "donki.cme",
         "donki.gst",
     } <= datasets
+
+
+def test_replay_sets_storm_noaa_scales():
+    scales = [d for d in _docs() if d["event"]["dataset"] == "swpc.noaa_scales"]
+    assert len(scales) == 1
+    metrics = scales[0]["metrics"]
+    # G5 / R3 / S1 so the SOC Overview scale tiles light up during the replay
+    assert metrics["g_scale"] == 5 and metrics["r_scale"] == 3 and metrics["s_scale"] == 1
 
 
 def test_replay_rebases_peak_to_now():

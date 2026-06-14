@@ -44,6 +44,7 @@ from collector.feeds import (  # noqa: E402
     donki_gst,
     kp_index,
     mag,
+    noaa_scales,
     plasma,
     protons,
     xray,
@@ -60,6 +61,7 @@ REALTIME = (
     (protons, "protons.json"),
     (mag, "mag.json"),
     (plasma, "plasma.json"),
+    (noaa_scales, "noaa_scales.json"),  # current G/R/S scales -> SOC Overview tiles
 )
 # The DONKI catalog events feed the flare -> CME -> storm chain rule; they keep
 # their (days-apart) spacing relative to the realtime peak.
