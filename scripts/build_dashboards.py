@@ -35,11 +35,22 @@ INDEX_REF = "kibanaSavedObjectMeta.searchSourceJSON.index"
 # --- saved-object builders -------------------------------------------------
 
 
-def data_view(obj_id: str, title: str) -> dict:
+def data_view(
+    obj_id: str,
+    title: str,
+    field_formats: dict | None = None,
+    runtime_fields: dict | None = None,
+) -> dict:
+    attrs = {"title": title, "timeFieldName": "@timestamp", "name": title}
+    if field_formats:
+        # Per-field display formats (tooltips + axis labels).
+        attrs["fieldFormatMap"] = json.dumps(field_formats)
+    if runtime_fields:
+        attrs["runtimeFieldMap"] = json.dumps(runtime_fields)
     return {
         "id": obj_id,
         "type": "index-pattern",
-        "attributes": {"title": title, "timeFieldName": "@timestamp", "name": title},
+        "attributes": attrs,
         "references": [],
         "coreMigrationVersion": KIBANA_VERSION,
     }
@@ -130,7 +141,14 @@ def _category_axis() -> dict:
     }
 
 
-def _value_axis(axis_id: str, position: str, title: str, scale: str) -> dict:
+def _value_axis(
+    axis_id: str, position: str, title: str, scale: str, y_min: float | None = None
+) -> dict:
+    axis_scale: dict = {"type": scale, "mode": "normal"}
+    if y_min is not None:
+        # Pin the floor so a quiet baseline stays visible under a tall storm spike
+        # (esp. on log axes, where auto-scaling clips low values).
+        axis_scale.update({"defaultYExtents": False, "setYExtents": True, "min": y_min})
     return {
         "id": axis_id,
         "name": f"{position.capitalize()}Axis-{axis_id[-1]}",
@@ -138,8 +156,9 @@ def _value_axis(axis_id: str, position: str, title: str, scale: str) -> dict:
         "position": position,
         "show": True,
         "style": {},
-        "scale": {"type": scale, "mode": "normal"},
-        "labels": {"show": True, "rotate": 0, "filter": False, "truncate": 100},
+        "scale": axis_scale,
+        # filter: drop overlapping tick labels (declutters dense log axes)
+        "labels": {"show": True, "rotate": 0, "filter": True, "truncate": 100},
         "title": {"text": title},
     }
 
@@ -151,6 +170,7 @@ def series_vis(
     split_terms: str | None = None,
     scale: str = "linear",
     right_axis_title: str | None = None,
+    y_min: float | None = None,
 ) -> dict:
     """A timeseries chart over @timestamp.
 
@@ -209,7 +229,7 @@ def series_vis(
             }
         )
 
-    value_axes = [_value_axis("ValueAxis-1", "left", "", scale)]
+    value_axes = [_value_axis("ValueAxis-1", "left", "", scale, y_min)]
     if right_axis_title is not None:
         value_axes.append(_value_axis("ValueAxis-2", "right", right_axis_title, "linear"))
 
@@ -317,20 +337,34 @@ def markdown(obj_id: str, title: str, text: str) -> dict:
     }
 
 
-def dashboard(obj_id: str, title: str, description: str, panels: list[tuple]) -> dict:
-    """``panels`` = [(viz_id, x, y, w, h), ...] on Kibana's 48-column grid."""
+def dashboard(
+    obj_id: str,
+    title: str,
+    description: str,
+    panels: list[tuple],
+    *,
+    time_from: str = "now-7d",
+) -> dict:
+    """``panels`` = [(viz_id, x, y, w, h[, time_from]), ...] on Kibana's 48-column
+    grid. An optional 6th element pins that panel to its own ``[time_from, now]``
+    range — used to keep short-window metric feeds full on a wide-window dashboard.
+    """
     panels_json = []
     references = []
-    for i, (viz_id, x, y, w, h) in enumerate(panels):
+    for i, panel in enumerate(panels):
+        viz_id, x, y, w, h = panel[:5]
         panel_index = str(i)
         ref_name = f"panel_{i}"
+        embeddable: dict = {"enhancements": {}}
+        if len(panel) > 5 and panel[5]:
+            embeddable["timeRange"] = {"from": panel[5], "to": "now"}
         panels_json.append(
             {
                 "version": KIBANA_VERSION,
                 "type": "visualization",
                 "gridData": {"x": x, "y": y, "w": w, "h": h, "i": panel_index},
                 "panelIndex": panel_index,
-                "embeddableConfig": {"enhancements": {}},
+                "embeddableConfig": embeddable,
                 "panelRefName": ref_name,
             }
         )
@@ -347,7 +381,7 @@ def dashboard(obj_id: str, title: str, description: str, panels: list[tuple]) ->
             ),
             "version": 1,
             "timeRestore": True,
-            "timeFrom": "now-7d",
+            "timeFrom": time_from,
             "timeTo": "now",
             "refreshInterval": {"pause": True, "value": 60000},
             "kibanaSavedObjectMeta": {
@@ -366,7 +400,28 @@ def dashboard(obj_id: str, title: str, description: str, panels: list[tuple]) ->
 
 def build() -> list[dict]:
     objects: list[dict] = [
-        data_view(EVENTS_DV, "space-weather-events"),
+        data_view(
+            EVENTS_DV,
+            "space-weather-events",
+            field_formats={
+                "metrics.proton_flux_10mev": {"id": "number", "params": {"pattern": "0,0.[00]"}},
+                "xray_flux_uwm2": {"id": "number", "params": {"pattern": "0,0.[00]"}},
+            },
+            # X-ray flux is ~1e-6 W/m² — too tiny for Kibana's number formatter
+            # (renders as 0). Expose it in µW/m² (x1e6) so values are normal-sized
+            # and flare classes fall on round powers of ten (C=1, M=10, X=100).
+            runtime_fields={
+                "xray_flux_uwm2": {
+                    "type": "double",
+                    "script": {
+                        "source": (
+                            "if (!doc['metrics.xray_flux'].empty) "
+                            "{ emit(doc['metrics.xray_flux'].value * 1000000) }"
+                        )
+                    },
+                }
+            },
+        ),
         data_view(ALERTS_DV, "space-weather-alerts"),
     ]
 
@@ -512,9 +567,12 @@ def build() -> list[dict]:
     objects += [
         viz(
             "sws-sol-xray",
-            "GOES X-ray Flux — long band (W/m², log)",
+            "GOES X-ray Flux — long band (µW/m², log)",
             series_vis(
-                "line", [("1", "max", "metrics.xray_flux", "X-ray flux", "left")], scale="log"
+                "line",
+                [("1", "max", "xray_flux_uwm2", "X-ray flux (µW/m²)", "left")],
+                scale="log",
+                y_min=0.1,  # quiet background ~0.5 µW/m²; C=1, M=10, X=100, replay X10=1000
             ),
             EVENTS_DV,
             kql='event.dataset : "swpc.goes_xray"',
@@ -526,6 +584,7 @@ def build() -> list[dict]:
                 "line",
                 [("1", "max", "metrics.proton_flux_10mev", "Proton flux", "left")],
                 scale="log",
+                y_min=0.01,  # quiet background is ~0.2 pfu (< 1); floor below it
             ),
             EVENTS_DV,
             kql='event.dataset : "swpc.goes_protons"',
@@ -558,11 +617,14 @@ def build() -> list[dict]:
         "Solar Activity",
         "X-ray flux (log) and proton flux with DONKI flare/CME catalog activity.",
         [
-            ("sws-sol-xray", 0, 0, 24, 13),
-            ("sws-sol-protons", 24, 0, 24, 13),
+            # X-ray/proton feeds only have a 7-day window, so pin those panels to it
+            # while the dashboard (and the DONKI panels) span a richer 30 days.
+            ("sws-sol-xray", 0, 0, 24, 13, "now-7d"),
+            ("sws-sol-protons", 24, 0, 24, 13, "now-7d"),
             ("sws-sol-donki", 0, 13, 24, 12),
             ("sws-sol-flares", 24, 13, 24, 12),
         ],
+        time_from="now-30d",
     )
 
     # Pipeline Health -------------------------------------------------------
