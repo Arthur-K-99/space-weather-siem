@@ -687,6 +687,12 @@ def build() -> list[dict]:
             EVENTS_DV,
         ),
         viz(
+            "sws-health-alerts",
+            "Alerts Fired (range)",
+            metric_vis([("count", None, "Alerts fired")]),
+            ALERTS_DV,
+        ),
+        viz(
             "sws-health-feeds",
             "Documents per Feed",
             series_vis(
@@ -718,13 +724,20 @@ def build() -> list[dict]:
     health = dashboard(
         "sws-dashboard-health",
         "Pipeline Health",
-        "Ingest volume per feed and last-seen times — the SIEM 'log source health' view.",
+        "Ingest volume per feed, last-seen times, and alert count — the SIEM health view.",
         [
-            ("sws-health-total", 0, 0, 12, 8),
-            ("sws-health-feeds", 12, 0, 36, 13),
-            ("sws-health-lastseen", 0, 8, 24, 13),
+            # Two metric tiles + feed histogram fill row 1 at equal height.
+            # Both table panels share row 2 at the same y so they align flush.
+            # Feed histogram pinned to now-7d (SWPC max history); dashboard is
+            # now-30d so the pin mismatch is visible and Kibana activates the
+            # per-panel override (same pattern as Solar Activity).
+            ("sws-health-total", 0, 0, 12, 13),
+            ("sws-health-alerts", 12, 0, 12, 13),
+            ("sws-health-feeds", 24, 0, 24, 13, "now-7d"),
+            ("sws-health-lastseen", 0, 13, 24, 13),
             ("sws-health-by-dataset", 24, 13, 24, 13),
         ],
+        time_from="now-30d",
     )
 
     objects += [overview, geomagnetic, solar, health]

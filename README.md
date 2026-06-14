@@ -117,6 +117,20 @@ and response, one per rule.
 Four Kibana dashboards ship as code ([`kibana/`](kibana/)) and are imported by the
 bootstrap step. Shown populated by real backfilled data and the replayed storm.
 
+### SOC Overview
+Open alert count, highest active severity, current NOAA G/R/S scale tiles,
+alerts-by-severity timeline, event volume by category, and the Recent Alerts
+rule summary table — the single-pane-of-glass triage view.
+
+![SOC Overview dashboard](docs/img/dashboard-soc-overview.png)
+
+### Geomagnetic
+Peak Kp and G-scale metrics (pinned to last 7 days), Planetary K-index history,
+IMF Bz/Bt and solar-wind speed/density lines, the DONKI 90-day geomagnetic-storm
+catalog (Peak Kp per event), and a geomagnetic alert timeline.
+
+![Geomagnetic dashboard](docs/img/dashboard-geomagnetic.png)
+
 ### Solar Activity
 GOES X-ray flux (µW/m², log — flare classes C/M/X land on round powers of ten)
 and ≥10 MeV proton flux, alongside the DONKI flare/CME catalog and a
@@ -124,7 +138,11 @@ recent-events table.
 
 ![Solar Activity dashboard](docs/img/dashboard-solar-activity.png)
 
-<!-- SOC Overview, Geomagnetic, and Pipeline Health screenshots to follow. -->
+### Pipeline Health
+Total events ingested, alerts fired, per-feed document histogram (last 7 days),
+feed last-seen table for spotting silent sources, and ingest breakdown by dataset.
+
+![Pipeline Health dashboard](docs/img/dashboard-pipeline-health.png)
 
 
 > 🚧 The threshold and correlation rules rarely fire on live data — use the replay
