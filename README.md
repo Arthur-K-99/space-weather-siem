@@ -70,6 +70,23 @@ python -m venv .venv && .venv/bin/pip install -r collector/requirements.txt
 .venv/bin/python -m collector --once   # one pass over every feed, then exit
 ```
 
+## Backfill historical data
+
+The collector polls short recent windows (6-hour / 1-day) to keep each poll light,
+so a fresh stack has little history and the dashboards look sparse.
+[`scripts/backfill.py`](scripts/backfill.py) fills them with **real** data — the
+SWPC `*-7-day` product windows (a week of X-ray, proton, and solar-wind metrics)
+plus a long DONKI look-back (months of real flares, CMEs, and storms):
+
+```sh
+.venv/bin/python scripts/backfill.py              # SWPC 7-day + DONKI 90 days
+.venv/bin/python scripts/backfill.py --donki-days 30
+```
+
+It reuses the collector's normalizers and idempotent indexing, so re-running is
+safe (overlapping records are skipped). Widen the Kibana time picker to see the
+full DONKI catalog history.
+
 ## Replay the May 2024 G5 storm
 
 Space weather is usually quiet, so the rules rarely fire on live data — the
