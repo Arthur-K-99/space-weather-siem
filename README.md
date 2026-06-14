@@ -112,6 +112,21 @@ events are tagged `replay`/`gannon-2024` so they're easy to filter out afterward
 Every alert has a triage playbook in [`docs/runbooks/`](docs/runbooks/) — impact
 and response, one per rule.
 
+## Dashboards
+
+Four Kibana dashboards ship as code ([`kibana/`](kibana/)) and are imported by the
+bootstrap step. Shown populated by real backfilled data and the replayed storm.
+
+### Solar Activity
+GOES X-ray flux (µW/m², log — flare classes C/M/X land on round powers of ten)
+and ≥10 MeV proton flux, alongside the DONKI flare/CME catalog and a
+recent-events table.
+
+![Solar Activity dashboard](docs/img/dashboard-solar-activity.png)
+
+<!-- SOC Overview, Geomagnetic, and Pipeline Health screenshots to follow. -->
+
+
 > 🚧 The threshold and correlation rules rarely fire on live data — use the replay
 > above to see the full pipeline light up on demand.
 
