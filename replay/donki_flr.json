@@ -1,0 +1,15 @@
+[
+  {
+    "flrID": "2024-05-08T01:33:00-FLR-001",
+    "catalog": "M2M_CATALOG",
+    "instruments": [{"displayName": "GOES-P: EXIS 1.0-8.0"}],
+    "beginTime": "2024-05-08T01:33Z",
+    "peakTime": "2024-05-08T01:41Z",
+    "endTime": "2024-05-08T01:48Z",
+    "classType": "X1.0",
+    "sourceLocation": "S17E13",
+    "activeRegionNum": 13664,
+    "note": "Replay fixture — May 2024 Gannon storm, AR3664.",
+    "linkedEvents": [{"activityID": "2024-05-08T05:36:00-CME-001"}]
+  }
+]

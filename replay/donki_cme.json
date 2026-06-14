@@ -1,0 +1,21 @@
+[
+  {
+    "activityID": "2024-05-08T05:36:00-CME-001",
+    "catalog": "M2M_CATALOG",
+    "startTime": "2024-05-08T05:36Z",
+    "sourceLocation": "S17E13",
+    "activeRegionNum": 13664,
+    "note": "Replay fixture — fast halo CME from AR3664 (May 2024 Gannon storm).",
+    "cmeAnalyses": [
+      {
+        "isMostAccurate": true,
+        "time21_5": "2024-05-08T08:48Z",
+        "latitude": -15.0,
+        "longitude": -10.0,
+        "halfAngle": 45.0,
+        "speed": 1100.0,
+        "type": "C"
+      }
+    ]
+  }
+]

@@ -70,7 +70,33 @@ python -m venv .venv && .venv/bin/pip install -r collector/requirements.txt
 .venv/bin/python -m collector --once   # one pass over every feed, then exit
 ```
 
-> 🚧 Space weather is usually quiet, so the threshold and correlation rules rarely fire on live data — the dashboards' alert panels stay empty until they do. Replay lands with M7 — see the [roadmap](#roadmap). Coming up: `python scripts/replay.py` to replay the May 2024 G5 storm so every rule fires on demand.
+## Replay the May 2024 G5 storm
+
+Space weather is usually quiet, so the rules rarely fire on live data — the
+dashboards' alert panels stay empty until they do. Rather than wait for the Sun,
+replay a historical storm. [`scripts/replay.py`](scripts/replay.py) backfills the
+**May 2024 Gannon storm** (committed fixtures in [`replay/`](replay/)) through the
+real normalizers, with timestamps rebased to *now* so the detector sees a live G5:
+
+```sh
+.venv/bin/python scripts/replay.py        # inject the storm at the current time
+.venv/bin/python -m detector --once        # evaluate — the storm rules fire
+```
+
+This is the purple-team / attack-simulation analog: a deterministic incident you
+can summon for demos. The storm rules light up immediately — Geomagnetic Storm
+(G5), Solar Storm Chain (flare→CME→storm), Radio Blackout (R3), Radiation Storm
+(S1), and the Storm Precursor — and the alerts land deduplicated on the **SOC
+Overview** dashboard. The sixth rule, telemetry-loss, is *absence* detection: it
+fires when a feed is genuinely silent (the replay holds the plasma feed back to
+demonstrate it — see its [runbook](docs/runbooks/telemetry_loss.md)). Replayed
+events are tagged `replay`/`gannon-2024` so they're easy to filter out afterward.
+
+Every alert has a triage playbook in [`docs/runbooks/`](docs/runbooks/) — impact
+and response, one per rule.
+
+> 🚧 The threshold and correlation rules rarely fire on live data — use the replay
+> above to see the full pipeline light up on demand.
 
 ## Roadmap
 
@@ -81,7 +107,7 @@ python -m venv .venv && .venv/bin/pip install -r collector/requirements.txt
 - [x] **M4** — Detection engine: YAML rules, threshold rules 1–3, alert dedup/throttle
 - [x] **M5** — Correlation + health rules 4–6: storm precursor, flare→CME→storm chain, telemetry loss
 - [x] **M6** — Kibana dashboards (4 dashboards as code → NDJSON, imported by bootstrap)
-- [ ] **M7** — Historical-storm replay + runbooks + screenshots
+- [x] **M7** — Historical-storm replay ([`scripts/replay.py`](scripts/replay.py)) + per-rule [runbooks](docs/runbooks/)
 
 The full implementation plan is in [docs/PLAN.md](docs/PLAN.md).
 

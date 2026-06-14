@@ -1,0 +1,13 @@
+[
+  {
+    "gstID": "2024-05-10T15:00:00-GST-001",
+    "startTime": "2024-05-10T15:00Z",
+    "note": "Replay fixture — G5 geomagnetic storm (May 2024 Gannon storm).",
+    "allKpIndex": [
+      {"observedTime": "2024-05-10T18:00Z", "kpIndex": 7.67, "source": "NOAA"},
+      {"observedTime": "2024-05-10T21:00Z", "kpIndex": 8.33, "source": "NOAA"},
+      {"observedTime": "2024-05-11T00:00Z", "kpIndex": 9.0, "source": "NOAA"}
+    ],
+    "linkedEvents": [{"activityID": "2024-05-08T05:36:00-CME-001"}]
+  }
+]

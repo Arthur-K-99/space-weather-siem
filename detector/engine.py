@@ -211,23 +211,31 @@ def _stage_label(stage: Condition, match: Match) -> str:
 
 
 def _find_chain(stages: tuple[Condition, ...], by_stage: list[list[Match]], terminal: Match):
-    """Walk backward from a terminal-stage match, picking the closest preceding
-    match for each earlier stage within its ``within_s`` gap. Returns the ordered
-    matches, or None if any link is missing."""
-    chosen = [terminal]
-    nxt_ts = terminal[2]
-    for i in range(len(stages) - 1, 0, -1):
-        gap = stages[i].within_s or 0
-        candidates = [
-            m for m in by_stage[i - 1] if m[2] <= nxt_ts and (nxt_ts - m[2]).total_seconds() <= gap
-        ]
-        if not candidates:
-            return None
-        prev = max(candidates, key=lambda m: m[2])
-        chosen.append(prev)
-        nxt_ts = prev[2]
-    chosen.reverse()
-    return chosen
+    """Walk backward from a terminal-stage match, choosing for each earlier stage
+    the closest preceding match within its ``within_s`` gap that still lets the
+    rest of the chain complete. Backtracks, so unrelated events of the same
+    dataset sitting between two real stages don't break the link (e.g. background
+    CMEs between the chain's flare and its geomagnetic storm). Returns the ordered
+    matches, or None."""
+
+    def back(i: int, after: Match):
+        if i < 0:
+            return []
+        gap = stages[i + 1].within_s or 0
+        ref = after[2]
+        candidates = sorted(
+            (m for m in by_stage[i] if m[2] <= ref and (ref - m[2]).total_seconds() <= gap),
+            key=lambda m: m[2],
+            reverse=True,  # closest preceding first
+        )
+        for cand in candidates:
+            prefix = back(i - 1, cand)
+            if prefix is not None:
+                return [*prefix, cand]
+        return None
+
+    prefix = back(len(stages) - 2, terminal)
+    return None if prefix is None else [*prefix, terminal]
 
 
 def _eval_chain(rule: Rule, events: list[dict], now: datetime) -> list[tuple[str, dict]]:
