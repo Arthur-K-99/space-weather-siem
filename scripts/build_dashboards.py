@@ -66,14 +66,24 @@ def _search_source(kql: str) -> str:
     )
 
 
-def viz(obj_id: str, title: str, vis_state: dict, data_view_id: str, kql: str = "") -> dict:
+def viz(
+    obj_id: str,
+    title: str,
+    vis_state: dict,
+    data_view_id: str,
+    kql: str = "",
+    colors: dict[str, str] | None = None,
+) -> dict:
+    # Colors keyed by series label live in uiStateJSON, not visState — that's
+    # where Kibana writes them when you click a swatch in the legend editor.
+    ui_state = json.dumps({"vis": {"colors": colors}} if colors else {})
     return {
         "id": obj_id,
         "type": "visualization",
         "attributes": {
             "title": title,
             "description": vis_state.pop("_description", ""),
-            "uiStateJSON": "{}",
+            "uiStateJSON": ui_state,
             "version": 1,
             "visState": json.dumps(vis_state),
             "kibanaSavedObjectMeta": {"searchSourceJSON": _search_source(kql)},
@@ -176,6 +186,7 @@ def series_vis(
 
     ``series`` = [(agg_id, agg_type, field, label, axis), ...] where ``axis`` is
     "left" or "right". ``split_terms`` adds a terms sub-bucket (one line per term).
+    Pass ``colors`` to the wrapping ``viz()`` call to pin series label → hex color.
     """
     aggs: list[dict] = []
     series_params: list[dict] = []
@@ -517,11 +528,19 @@ def build() -> list[dict]:
             kql='event.dataset : "swpc.planetary_k_index"',
         ),
         viz(
+            "sws-geo-gscale-now",
+            "Peak G-scale (range)",
+            metric_vis([("max", "metrics.g_scale", "G-scale (0-5)")]),
+            EVENTS_DV,
+            kql='event.dataset : "swpc.noaa_scales"',
+        ),
+        viz(
             "sws-geo-kp-history",
             "Planetary K-index",
             series_vis("histogram", [("1", "max", "metrics.kp_index", "Kp", "left")]),
             EVENTS_DV,
             kql='event.dataset : "swpc.planetary_k_index"',
+            colors={"Kp": "#3B82F6"},
         ),
         viz(
             "sws-geo-bz-bt",
@@ -535,6 +554,7 @@ def build() -> list[dict]:
             ),
             EVENTS_DV,
             kql='event.dataset : "swpc.solar_wind_mag"',
+            colors={"Bz (min)": "#818CF8", "Bt (max)": "#3B82F6"},
         ),
         viz(
             "sws-geo-wind",
@@ -546,21 +566,52 @@ def build() -> list[dict]:
                     ("2", "avg", "metrics.density", "Density p/cc", "right"),
                 ],
                 right_axis_title="Density (p/cc)",
+                y_min=200,  # quiet solar wind ~350-450 km/s; floor keeps baseline visible
             ),
             EVENTS_DV,
             kql='event.dataset : "swpc.solar_wind_plasma"',
+            colors={"Speed km/s": "#3B82F6", "Density p/cc": "#818CF8"},
+        ),
+        viz(
+            "sws-geo-gst",
+            "DONKI Geomagnetic Storms — Peak Kp (90d catalog)",
+            series_vis("histogram", [("1", "max", "metrics.kp_index", "Peak Kp", "left")]),
+            EVENTS_DV,
+            kql='event.dataset : "donki.gst"',
+            colors={"Peak Kp": "#60A5FA"},
+        ),
+        viz(
+            "sws-geo-alerts",
+            "Geomagnetic Alerts",
+            series_vis(
+                "histogram",
+                [("1", "count", None, "Alerts", "left")],
+                split_terms="rule.name",
+            ),
+            ALERTS_DV,
+            kql=(
+                'rule.name : "Geomagnetic Storm" or '
+                'rule.name : "Geomagnetic Storm Precursor" or '
+                'rule.name : "Solar Storm Chain"'
+            ),
         ),
     ]
     geomagnetic = dashboard(
         "sws-dashboard-geomagnetic",
         "Geomagnetic",
-        "Kp index history, interplanetary magnetic field (Bz/Bt), and solar wind.",
+        "Kp index, NOAA G-scale, IMF Bz/Bt, solar wind, DONKI storm catalog, and alerts.",
         [
-            ("sws-geo-kp-now", 0, 0, 12, 8),
-            ("sws-geo-kp-history", 12, 0, 36, 8),
-            ("sws-geo-bz-bt", 0, 8, 24, 13),
-            ("sws-geo-wind", 24, 8, 24, 13),
+            # SWPC feeds only have 7-day history — pin those panels; DONKI + alerts
+            # use the full 30-day window so the storm catalog is visible.
+            ("sws-geo-kp-now", 0, 0, 12, 8, "now-7d"),
+            ("sws-geo-gscale-now", 12, 0, 12, 8, "now-7d"),
+            ("sws-geo-kp-history", 24, 0, 24, 8, "now-7d"),
+            ("sws-geo-bz-bt", 0, 8, 24, 13, "now-7d"),
+            ("sws-geo-wind", 24, 8, 24, 13, "now-7d"),
+            ("sws-geo-gst", 0, 21, 24, 12),
+            ("sws-geo-alerts", 24, 21, 24, 12),
         ],
+        time_from="now-30d",
     )
 
     # Solar Activity --------------------------------------------------------
